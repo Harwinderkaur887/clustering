@@ -53,7 +53,7 @@ input_encoded = input_encoded[expected_cols]
 
 
     # Scale the data
-    input_scaled = scaler.transform(input_encoded)
+input_scaled = scaler.transform(input_encoded)
 
     # Predict cluster
     cluster = kmeans.predict(input_scaled)[0]
