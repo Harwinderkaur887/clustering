@@ -59,7 +59,7 @@ input_scaled = scaler.transform(input_encoded)
 cluster = kmeans.predict(input_scaled)[0]
 
     # Output
-    st.success(f"🎯 Predicted Cluster: {cluster}")
+st.success(f"🎯 Predicted Cluster: {cluster}")
     input_data["Predicted_Cluster"] = cluster
     st.dataframe(input_data)
 
