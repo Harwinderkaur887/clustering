@@ -4,8 +4,13 @@ import numpy as np
 import os
 import joblib
 
-st.set_page_config(page_title="User Data Input", layout="centered")
-st.title("📝 User Information Form")
+# Load the saved model and scaler
+kmeans = joblib.load("kmeans_model.pkl")  # Make sure this file is present
+scaler = joblib.load("scaler.pkl")        # Make sure this file is present
+
+# Set Streamlit configuration
+st.set_page_config(page_title="KMeans Clustering", layout="centered")
+st.title("📊 User Cluster Prediction using KMeans")
 
 # Input form
 gender = st.selectbox("Gender", ["Male", "Female", "Other"])
@@ -16,15 +21,11 @@ profession = st.selectbox("Profession", ["Engineer", "Healthcare", "Executive", 
 work_experience = st.number_input("Work Experience (Years)", min_value=0, max_value=50, step=1)
 spending_score = st.selectbox("Spending Score", ["Low", "Average", "High"])
 family_size = st.number_input("Family Size", min_value=0, max_value=20, step=1)
-var_1 = st.selectbox("Var_1", ["Cat_6", "Cat_1", "Cat_2", "Cat_3", "Cat_4", "Cat_5", "Other"])
+var_1 = st.selectbox("Var_1", ["Cat_1", "Cat_2", "Cat_3", "Cat_4", "Cat_5", "Cat_6", "Other"])
 
-# Submit
-if st.button("Submit"):
-    # Generate a dummy ID (optional: could be from timestamp or incremental counter)
-    new_id = pd.Timestamp.now().value % 10**6
-
-    new_data = {
-        "ID": new_id,
+if st.button("Predict Cluster"):
+    # Create input DataFrame
+    input_data = pd.DataFrame([{
         "Gender": gender,
         "Ever_Married": ever_married,
         "Age": age,
@@ -34,17 +35,31 @@ if st.button("Submit"):
         "Spending_Score": spending_score,
         "Family_Size": family_size,
         "Var_1": var_1
-    }
+    }])
 
-    df = pd.DataFrame([new_data])
+    # Encode categorical variables using get_dummies (same as training)
+    input_encoded = pd.get_dummies(input_data)
 
-    # Show result
-    st.success("✅ Data Submitted Successfully!")
-    st.dataframe(df)
+    # Align with model training columns
+    expected_cols = scaler.feature_names_in_
+    for col in expected_cols:
+        if col not in input_encoded:
+            input_encoded[col] = 0
+    input_encoded = input_encoded[expected_cols]
 
-    # Save to CSV (append mode)
-    csv_file = "user_submissions.csv"
-    if os.path.exists(csv_file):
-        df.to_csv(csv_file, mode='a', header=False, index=False)
+    # Scale the data
+    input_scaled = scaler.transform(input_encoded)
+
+    # Predict cluster
+    cluster = kmeans.predict(input_scaled)[0]
+
+    # Output
+    st.success(f"🎯 Predicted Cluster: {cluster}")
+    input_data["Predicted_Cluster"] = cluster
+    st.dataframe(input_data)
+
+    # Save to CSV
+    if os.path.exists("user_predictions.csv"):
+        input_data.to_csv("user_predictions.csv", mode='a', header=False, index=False)
     else:
-        df.to_csv(csv_file, mode='w', header=True, index=False)
+        input_data.to_csv("user_predictions.csv", mode='w', header=True, index=False)
