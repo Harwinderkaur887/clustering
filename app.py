@@ -2,50 +2,51 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-st.cache_resource
-def load_model():
-    kmeans = joblib.load("kmeans.pkl")
-    scaler = joblib.load("scaler.pkl")
-    return kmeans, scaler
+import streamlit as st
+import pandas as pd
+import os
 
-st.set_page_config(page_title="CSV Cleaner App", layout="wide")
+st.set_page_config(page_title="User Data Input", layout="centered")
+st.title("📝 User Information Form")
 
-st.title("🧼 CSV Cleaning App using Streamlit")
+# Input form
+gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+ever_married = st.selectbox("Ever Married?", ["Yes", "No"])
+age = st.number_input("Age", min_value=0, max_value=120, step=1)
+graduated = st.selectbox("Graduated?", ["Yes", "No"])
+profession = st.selectbox("Profession", ["Engineer", "Healthcare", "Executive", "Marketing", "Other"])
+work_experience = st.number_input("Work Experience (Years)", min_value=0, max_value=50, step=1)
+spending_score = st.selectbox("Spending Score", ["Low", "Average", "High"])
+family_size = st.number_input("Family Size", min_value=0, max_value=20, step=1)
+var_1 = st.selectbox("Var_1", ["Cat_6", "Cat_1", "Cat_2", "Cat_3", "Cat_4", "Cat_5", "Other"])
 
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+# Submit
+if st.button("Submit"):
+    # Generate a dummy ID (optional: could be from timestamp or incremental counter)
+    new_id = pd.Timestamp.now().value % 10**6
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    st.subheader("📊 Original Data Preview")
-    st.write(df.head())
+    new_data = {
+        "ID": new_id,
+        "Gender": gender,
+        "Ever_Married": ever_married,
+        "Age": age,
+        "Graduated": graduated,
+        "Profession": profession,
+        "Work_Experience": work_experience,
+        "Spending_Score": spending_score,
+        "Family_Size": family_size,
+        "Var_1": var_1
+    }
 
-    
+    df = pd.DataFrame([new_data])
 
-    # Fill missing values
-    if 'Ever_Married' in df.columns:
-        df["Ever_Married"] = df["Ever_Married"].fillna(df["Ever_Married"].mode()[0])
+    # Show result
+    st.success("✅ Data Submitted Successfully!")
+    st.dataframe(df)
 
-    if 'Graduated' in df.columns:
-        df["Graduated"] = df["Graduated"].fillna(df["Graduated"].mode()[0])
-
-    if 'Profession' in df.columns:
-        df["Profession"] = df["Profession"].fillna(df["Profession"].mode()[0])
-
-    if 'Work_Experience' in df.columns:
-        df["Work_Experience"] = df["Work_Experience"].fillna(int(df["Work_Experience"].mean()))
-
-    if 'Family_Size' in df.columns:
-        df["Family_Size"] = df["Family_Size"].fillna(df["Family_Size"].mode()[0])
-
-    if 'Var_1' in df.columns:
-        df["Var_1"] = df["Var_1"].fillna(df["Var_1"].mode()[0])
-
-    st.success("✅ Null values filled successfully!")
-
-    st.subheader("🧼 Cleaned Data Preview")
-    st.write(df.head())
-
-    st.subheader("⬇️ Download Cleaned CSV")
-    st.download_button("Download", data=df.to_csv(index=False), file_name="cleaned_data.csv", mime="text/csv")
-else:
-    st.info("Please upload a CSV file to get started.")
+    # Save to CSV (append mode)
+    csv_file = "user_submissions.csv"
+    if os.path.exists(csv_file):
+        df.to_csv(csv_file, mode='a', header=False, index=False)
+    else:
+        df.to_csv(csv_file, mode='w', header=True, index=False)
