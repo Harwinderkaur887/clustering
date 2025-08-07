@@ -5,7 +5,7 @@ import os
 import joblib
 
 # Load the saved model and scaler
-kmeans = joblib.load("kmeans_model.pkl")  # Make sure this file is present
+kmeans = joblib.load("kmeans.pkl")  # Make sure this file is present
 scaler = joblib.load("scaler.pkl")        # Make sure this file is present
 
 # Set Streamlit configuration
