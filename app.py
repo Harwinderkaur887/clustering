@@ -4,9 +4,6 @@ import numpy as np
 import os
 import joblib
 
-kmeans = joblib.load("kmeans_model.pkl")           # Your trained model
-scaler = joblib.load("scaler.pkl") 
-
 st.set_page_config(page_title="User Data Input", layout="centered")
 st.title("📝 User Information Form")
 
