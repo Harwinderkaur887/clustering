@@ -60,8 +60,8 @@ cluster = kmeans.predict(input_scaled)[0]
 
     # Output
 st.success(f"🎯 Predicted Cluster: {cluster}")
-    input_data["Predicted_Cluster"] = cluster
-    st.dataframe(input_data)
+input_data["Predicted_Cluster"] = cluster
+st.dataframe(input_data)
 
     # Save to CSV
     if os.path.exists("user_predictions.csv"):
