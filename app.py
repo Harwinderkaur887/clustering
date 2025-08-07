@@ -38,7 +38,7 @@ if st.button("Predict Cluster"):
     }])
 
     # Encode categorical variables using get_dummies (same as training)
-    input_encoded = pd.get_dummies(input_data)
+input_encoded = pd.get_dummies(input_data)
 
     # Load columns the model was trained on
 expected_cols = scaler.feature_names_in_
