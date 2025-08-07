@@ -19,8 +19,7 @@ if uploaded_file is not None:
     st.subheader("📊 Original Data Preview")
     st.write(df.head())
 
-    st.subheader("🔍 Null Value Summary")
-    st.write(df.isnull().sum())
+    
 
     # Fill missing values
     if 'Ever_Married' in df.columns:
