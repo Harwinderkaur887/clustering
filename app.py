@@ -40,12 +40,17 @@ if st.button("Predict Cluster"):
     # Encode categorical variables using get_dummies (same as training)
     input_encoded = pd.get_dummies(input_data)
 
-    # Align with model training columns
-    expected_cols = scaler.feature_names_in_
-    for col in expected_cols:
-        if col not in input_encoded:
-            input_encoded[col] = 0
-    input_encoded = input_encoded[expected_cols]
+    # Load columns the model was trained on
+expected_cols = scaler.feature_names_in_
+
+# Add missing columns
+for col in expected_cols:
+    if col not in input_encoded.columns:
+        input_encoded[col] = 0
+
+# Remove any extra columns that weren't in training
+input_encoded = input_encoded[expected_cols]
+
 
     # Scale the data
     input_scaled = scaler.transform(input_encoded)
