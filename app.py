@@ -56,7 +56,7 @@ input_encoded = input_encoded[expected_cols]
 input_scaled = scaler.transform(input_encoded)
 
     # Predict cluster
-    cluster = kmeans.predict(input_scaled)[0]
+cluster = kmeans.predict(input_scaled)[0]
 
     # Output
     st.success(f"🎯 Predicted Cluster: {cluster}")
