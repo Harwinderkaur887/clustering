@@ -5,8 +5,8 @@ import os
 import joblib
 
 # Load the saved model and scaler
-kmeans = joblib.load("kmeans.pkl")  # Make sure this file is present
-scaler = joblib.load("scaler.pkl")        # Make sure this file is present
+kmeans = joblib.load("kmeans.pkl")  # Must exist in the same folder
+scaler = joblib.load("scaler.pkl")
 
 # Set Streamlit configuration
 st.set_page_config(page_title="KMeans Clustering", layout="centered")
@@ -23,6 +23,7 @@ spending_score = st.selectbox("Spending Score", ["Low", "Average", "High"])
 family_size = st.number_input("Family Size", min_value=0, max_value=20, step=1)
 var_1 = st.selectbox("Var_1", ["Cat_1", "Cat_2", "Cat_3", "Cat_4", "Cat_5", "Cat_6", "Other"])
 
+# Button action
 if st.button("Predict Cluster"):
     # Create input DataFrame
     input_data = pd.DataFrame([{
@@ -37,34 +38,29 @@ if st.button("Predict Cluster"):
         "Var_1": var_1
     }])
 
-    # Encode categorical variables using get_dummies (same as training)
-input_encoded = pd.get_dummies(input_data)
+    # Encode categorical variables
+    input_encoded = pd.get_dummies(input_data)
 
-    # Load columns the model was trained on
-expected_cols = scaler.feature_names_in_
-
-# Add missing columns
-for col in expected_cols:
-    if col not in input_encoded.columns:
-        input_encoded[col] = 0
-
-# Remove any extra columns that weren't in training
-input_encoded = input_encoded[expected_cols]
-
+    # Align with training columns
+    expected_cols = scaler.feature_names_in_
+    for col in expected_cols:
+        if col not in input_encoded.columns:
+            input_encoded[col] = 0
+    input_encoded = input_encoded[expected_cols]
 
     # Scale the data
-input_scaled = scaler.transform(input_encoded)
+    input_scaled = scaler.transform(input_encoded)
 
     # Predict cluster
-cluster = kmeans.predict(input_scaled)[0]
+    cluster = kmeans.predict(input_scaled)[0]
 
-    # Output
-st.success(f"🎯 Predicted Cluster: {cluster}")
-input_data["Predicted_Cluster"] = cluster
-st.dataframe(input_data)
+    # Show result
+    st.success(f"🎯 Predicted Cluster: {cluster}")
+    input_data["Predicted_Cluster"] = cluster
+    st.dataframe(input_data)
 
     # Save to CSV
-if os.path.exists("user_predictions.csv"):
+    if os.path.exists("user_predictions.csv"):
         input_data.to_csv("user_predictions.csv", mode='a', header=False, index=False)
-else:
+    else:
         input_data.to_csv("user_predictions.csv", mode='w', header=True, index=False)
