@@ -4,63 +4,62 @@ import numpy as np
 import os
 import joblib
 
-# Load the saved model and scaler
-kmeans = joblib.load("kmeans.pkl")  # Must exist in the same folder
-scaler = joblib.load("scaler.pkl")
+st.set_page_config(page_title="KMeans Predictor", layout="centered")
+st.title("🤖 Customer Cluster Prediction (KMeans Model)")
 
-# Set Streamlit configuration
-st.set_page_config(page_title="KMeans Clustering", layout="centered")
-st.title("📊 User Cluster Prediction using KMeans")
+# Load model and scaler
+@st.cache_resource
+def load_model():
+    kmeans = joblib.load("kmeans.pkl")
+    scaler = joblib.load("scaler.pkl")
+    return kmeans, scaler
 
-# Input form
-gender = st.selectbox("Gender", ["Male", "Female", "Other"])
-ever_married = st.selectbox("Ever Married?", ["Yes", "No"])
-age = st.number_input("Age", min_value=0, max_value=120, step=1)
-graduated = st.selectbox("Graduated?", ["Yes", "No"])
-profession = st.selectbox("Profession", ["Engineer", "Healthcare", "Executive", "Marketing", "Other"])
-work_experience = st.number_input("Work Experience (Years)", min_value=0, max_value=50, step=1)
-spending_score = st.selectbox("Spending Score", ["Low", "Average", "High"])
-family_size = st.number_input("Family Size", min_value=0, max_value=20, step=1)
-var_1 = st.selectbox("Var_1", ["Cat_1", "Cat_2", "Cat_3", "Cat_4", "Cat_5", "Cat_6", "Other"])
+kmeans, scaler = load_model()
 
-# Button action
+# Feature Inputs
+st.subheader("Enter Customer Features")
+
+gender = st.selectbox("Gender", ["Male", "Female"])
+married = st.selectbox("Ever Married", ["Yes", "No"])
+age = st.number_input("Age", value=30.0, step=1.0)
+graduated = st.selectbox("Graduated", ["Yes", "No"])
+profession = st.selectbox(
+    "Profession",
+    ["Artist", "Doctor", "Engineer", "Entertainment", "Executive",
+     "Healthcare", "Homemaker", "Lawyer", "Marketing", "Other"]
+)
+work_exp = st.number_input("Work Experience (Years)", value=3, step=1)
+spending_score = st.number_input("Spending Score", value=60.0, step=1.0)
+family_size = st.number_input("Family Size", value=2, step=1)
+
+# Encode categorical inputs to match training
+gender_enc = 1 if gender.lower() == "male" else 0
+married_enc = 1 if married.lower() == "yes" else 0
+graduated_enc = 1 if graduated.lower() == "yes" else 0
+
+# Label encoding for profession (must match training order!)
+profession_map = {
+    "Artist": 0, "Doctor": 1, "Engineer": 2, "Entertainment": 3,
+    "Executive": 4, "Healthcare": 5, "Homemaker": 6, "Lawyer": 7,
+    "Marketing": 8, "Other": 9
+}
+profession_enc = profession_map.get(profession, 9)
+
+# Combine into feature array (8 features in exact order)
+features = np.array([[gender_enc, married_enc, age, graduated_enc,
+                      profession_enc, int(work_exp), spending_score, int(family_size)]])
+
+# DEBUG: Show what you’re passing
+st.write("🔍 Input Features (before scaling):", features)
+st.write("📏 Shape:", features.shape)
+
+# Predict
 if st.button("Predict Cluster"):
-    # Create input DataFrame
-    input_data = pd.DataFrame([{
-        "Gender": gender,
-        "Ever_Married": ever_married,
-        "Age": age,
-        "Graduated": graduated,
-        "Profession": profession,
-        "Work_Experience": work_experience,
-        "Spending_Score": spending_score,
-        "Family_Size": family_size,
-        "Var_1": var_1
-    }])
+    try:
+        scaled_input = scaler.transform(features)
+        st.write("🧪 Scaled Input Shape:", scaled_input.shape)
 
-    # Encode categorical variables
-    input_encoded = pd.get_dummies(input_data)
-
-    # Align with training columns
-    expected_cols = scaler.feature_names_in_
-    for col in expected_cols:
-        if col not in input_encoded.columns:
-            input_encoded[col] = 0
-    input_encoded = input_encoded[expected_cols]
-
-    # Scale the data
-    input_scaled = scaler.transform(input_encoded)
-
-    # Predict cluster
-    cluster = kmeans.predict(input_scaled)[0]
-
-    # Show result
-    st.success(f"🎯 Predicted Cluster: {cluster}")
-    input_data["Predicted_Cluster"] = cluster
-    st.dataframe(input_data)
-
-    # Save to CSV
-    if os.path.exists("user_predictions.csv"):
-        input_data.to_csv("user_predictions.csv", mode='a', header=False, index=False)
-    else:
-        input_data.to_csv("user_predictions.csv", mode='w', header=True, index=False)
+        cluster = kmeans.predict(scaled_input)
+        st.success(f"✅ Predicted Cluster: {cluster[0]}")
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
