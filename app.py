@@ -66,5 +66,5 @@ st.dataframe(input_data)
     # Save to CSV
 if os.path.exists("user_predictions.csv"):
         input_data.to_csv("user_predictions.csv", mode='a', header=False, index=False)
-    else:
+else:
         input_data.to_csv("user_predictions.csv", mode='w', header=True, index=False)
