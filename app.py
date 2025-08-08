@@ -1,6 +1,7 @@
 import streamlit as st
 import joblib
 import numpy as np
+import skfuzzy as fuzz
 
 # ---------------------------
 # Load Models & Scaler
@@ -9,12 +10,12 @@ import numpy as np
 def load_models():
     kmeans = joblib.load("km.pkl")
     dbscan = joblib.load("cl.pkl")
-    fcm = joblib.load("fuzzy.pkl")  # Assuming this is a fitted model object
     meanshift = joblib.load("mn.pkl")
     scaler = joblib.load("s.pkl")
-    return kmeans, dbscan, fcm, meanshift, scaler
+    fuzzy_cntr, _ = joblib.load("fuzzy.pkl")  # You saved tuple (cntr, cluster_labels)
+    return kmeans, dbscan, meanshift, scaler, fuzzy_cntr
 
-kmeans, dbscan, fcm, meanshift, scaler = load_models()
+kmeans, dbscan, meanshift, scaler, fuzzy_cntr = load_models()
 
 # ---------------------------
 # Streamlit Page Config
@@ -32,9 +33,9 @@ algorithm = st.selectbox(
 )
 
 # ---------------------------
-# Feature Input (Change to your real feature names)
+# Feature Input (Change to real feature names)
 # ---------------------------
-feature_names = ["Feature 1", "Feature 2"]  # Replace with real feature names
+feature_names = ["Feature 1", "Feature 2"]  # Update with actual feature names from your dataset
 user_input = []
 
 for feature in feature_names:
@@ -52,15 +53,18 @@ if st.button("Predict Cluster"):
         cluster = kmeans.predict(X_scaled)[0]
 
     elif algorithm == "DBSCAN":
-        cluster = dbscan.fit_predict(X_scaled)[0]  # Or use precomputed if available
+        # DBSCAN has no predict method — run fit_predict for this single point
+        cluster = dbscan.fit_predict(X_scaled)[0]
         if cluster == -1:
             st.warning("⚠️ This point is considered noise by DBSCAN.")
-    
+
     elif algorithm == "Fuzzy C-Means":
-        # Assuming fcm has a predict method or u, _, _, _, _ = fcm.predict(X_scaled)
-        u, _, _, _, _, _, _ = fcm.predict(X_scaled)
-        cluster = np.argmax(u, axis=1)[0]
-    
+        # Using saved cluster centers (fuzzy_cntr)
+        u, _, _, _, _, _, _ = fuzz.cmeans_predict(
+            X_scaled.T, fuzzy_cntr, m=2, error=0.005, maxiter=1000
+        )
+        cluster = np.argmax(u, axis=0)[0]
+
     elif algorithm == "Mean Shift":
         cluster = meanshift.predict(X_scaled)[0]
 
