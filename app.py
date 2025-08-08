@@ -8,8 +8,8 @@ st.title("🤖 Customer Cluster Prediction (KMeans Model)")
 # Load model and scaler
 @st.cache_resource
 def load_model():
-    kmeans = joblib.load("kmeans.pkl")
-    scaler = joblib.load("scaler.pkl")
+    kmeans = joblib.load("km.pkl")
+    scaler = joblib.load("s.pkl")
     return kmeans, scaler
 
 kmeans, scaler = load_model()
