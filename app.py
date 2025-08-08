@@ -2,51 +2,62 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-st.cache_resource
+st.set_page_config(page_title="KMeans Predictor", layout="centered")
+st.title("🤖 Customer Cluster Prediction (KMeans Model)")
+
+# Load model and scaler
+@st.cache_resource
 def load_model():
     kmeans = joblib.load("kmeans.pkl")
     scaler = joblib.load("scaler.pkl")
     return kmeans, scaler
 
-st.set_page_config(page_title="CSV Cleaner App", layout="wide")
+kmeans, scaler = load_model()
 
-st.title("🧼 CSV Cleaning App using Streamlit")
+# Feature Inputs
+st.subheader("Enter Customer Features")
 
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+gender = st.selectbox("Gender", ["Male", "Female"])
+married = st.selectbox("Ever Married", ["Yes", "No"])
+age = st.number_input("Age", value=30.0, step=1.0)
+graduated = st.selectbox("Graduated", ["Yes", "No"])
+profession = st.selectbox(
+    "Profession",
+    ["Artist", "Doctor", "Engineer", "Entertainment", "Executive",
+     "Healthcare", "Homemaker", "Lawyer", "Marketing", "Other"]
+)
+work_exp = st.number_input("Work Experience (Years)", value=3, step=1)
+spending_score = st.number_input("Spending Score", value=60.0, step=1.0)
+family_size = st.number_input("Family Size", value=2, step=1)
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    st.subheader("📊 Original Data Preview")
-    st.write(df.head())
+# Encode categorical inputs to match training
+gender_enc = 1 if gender.lower() == "male" else 0
+married_enc = 1 if married.lower() == "yes" else 0
+graduated_enc = 1 if graduated.lower() == "yes" else 0
 
-    st.subheader("🔍 Null Value Summary")
-    st.write(df.isnull().sum())
+# Label encoding for profession (must match training order!)
+profession_map = {
+    "Artist": 0, "Doctor": 1, "Engineer": 2, "Entertainment": 3,
+    "Executive": 4, "Healthcare": 5, "Homemaker": 6, "Lawyer": 7,
+    "Marketing": 8, "Other": 9
+}
+profession_enc = profession_map.get(profession, 9)
 
-    # Fill missing values
-    if 'Ever_Married' in df.columns:
-        df["Ever_Married"] = df["Ever_Married"].fillna(df["Ever_Married"].mode()[0])
+# Combine into feature array (8 features in exact order)
+features = np.array([[gender_enc, married_enc, age, graduated_enc,
+                      profession_enc, int(work_exp), spending_score, int(family_size)]])
 
-    if 'Graduated' in df.columns:
-        df["Graduated"] = df["Graduated"].fillna(df["Graduated"].mode()[0])
+# DEBUG: Show what you’re passing
+st.write("🔍 Input Features (before scaling):", features)
+st.write("📏 Shape:", features.shape)
 
-    if 'Profession' in df.columns:
-        df["Profession"] = df["Profession"].fillna(df["Profession"].mode()[0])
+# Predict
+if st.button("Predict Cluster"):
+    try:
+        scaled_input = scaler.transform(features)
+        st.write("🧪 Scaled Input Shape:", scaled_input.shape)
 
-    if 'Work_Experience' in df.columns:
-        df["Work_Experience"] = df["Work_Experience"].fillna(int(df["Work_Experience"].mean()))
-
-    if 'Family_Size' in df.columns:
-        df["Family_Size"] = df["Family_Size"].fillna(df["Family_Size"].mode()[0])
-
-    if 'Var_1' in df.columns:
-        df["Var_1"] = df["Var_1"].fillna(df["Var_1"].mode()[0])
-
-    st.success("✅ Null values filled successfully!")
-
-    st.subheader("🧼 Cleaned Data Preview")
-    st.write(df.head())
-
-    st.subheader("⬇️ Download Cleaned CSV")
-    st.download_button("Download", data=df.to_csv(index=False), file_name="cleaned_data.csv", mime="text/csv")
-else:
-    st.info("Please upload a CSV file to get started.")
+        cluster = kmeans.predict(scaled_input)
+        st.success(f"✅ Predicted Cluster: {cluster[0]}")
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
