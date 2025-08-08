@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import joblib
 
 st.set_page_config(page_title="KMeans Predictor", layout="centered")
 st.title("🤖 Customer Cluster Prediction (KMeans Model)")
