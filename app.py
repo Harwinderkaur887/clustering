@@ -10,9 +10,9 @@ st.title("🤖 Customer Cluster Prediction (KMeans Model)")
 def load_model():
     km = joblib.load("km.pkl")
     s = joblib.load("s.pkl")
-    return kmeans, scaler
+    return km, s
 
-kmeans, scaler = load_model()
+km, s = load_model()
 
 # Feature Inputs
 st.subheader("Enter Customer Features")
